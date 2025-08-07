@@ -13,6 +13,16 @@ function fireClickEvent(element) {
     element.dispatchEvent(clickEvent);
 }
 
+function fireChangeEvent(element) {	
+    const event = new Event('change', { bubbles: true });
+    element.dispatchEvent(event);
+}
+
+function fireBlurEvent(element) {
+    const event = new Event('blur', { bubbles: true });
+    element.dispatchEvent(event);
+}
+
 /**
  * Returns a promise that resolves when the element with the given query selector
  * is present (either immediately or later). The observer stops listening after
@@ -113,4 +123,42 @@ function onNewElement(targetNode, selector, callback, stopOnFirstFind = false) {
     console.log(`MutationObserver started observing for '${selector}' within`, targetNode);
 
     return observer;
+}
+
+/**
+ * @param {HTMLElement} element The element to be tested for effective visibility
+ * @returns Whether the element is 'effectively' hidden after taking most things that
+ * can affect it, direct or indirect CSS, javascript, position, size etc.
+ */
+function isElementEffectivelyHidden(element) {
+    if (!element || !element.isConnected) {
+        return true;
+    }
+
+    if (element.offsetWidth === 0 || element.offsetHeight === 0) {
+        return true;
+    }
+
+    const computedStyle = window.getComputedStyle(element);
+    if (computedStyle.display === 'none'
+        || computedStyle.visibility === 'hidden'
+        || computedStyle.visibility === 'collapse'
+        || parseFloat(computedStyle.opacity) === 0
+    ) {
+        return true;
+    }
+
+    const rect = element.getBoundingClientRect();
+    if (rect.width === 0
+        || rect.height === 0
+        || (rect.left + rect.width <= 0)
+        || (rect.top + rect.height <= 0)
+        || (rect.left >= window.innerWidth)
+        || (rect.top >= window.innerHeight)
+    ) {
+        return true;
+    }
+
+    // Anything else that I can't think of?
+    return false;
 }
